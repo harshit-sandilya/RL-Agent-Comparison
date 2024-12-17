@@ -23,10 +23,8 @@ class Env(gym.Env):
         self.n = n_grid
         self.mines = n_mines
         self.dict = [(i, j) for i in range(n_grid) for j in range(n_grid)]
-        # self.action_space = spaces.Discrete(n_grid * n_grid)
-        low = np.array([0, 0])
-        high = np.array([n_grid - 1, n_grid - 1])
-        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        self.action_space = spaces.Discrete(n_grid * n_grid)
+        # self.action_space = spaces.MultiDiscrete([n_grid, n_grid])
         low = np.full((n_grid, n_grid), -1, dtype=np.int32)
         high = np.full((n_grid, n_grid), 10, dtype=np.int32)
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.int32)
@@ -40,16 +38,13 @@ class Env(gym.Env):
         return self.grid, {}
 
     def step(self, action):
-        # reward, over = self.calc_reward(self.dict[action])
-        reward, over = self.calc_reward(action)
+        reward, over = self.calc_reward(self.dict[action])
+        # reward, over = self.calc_reward(action)
         done = over
         info = {}
         return self.grid, reward, done, False, info
 
     def calc_reward(self, action):
-        action = np.int32(action)
-        if self._visited(action):
-            return -1, False
         print("++++++++++++++++++++++++++BEFORE+++++++++++++++++++++++++++++++")
         fancy_print(self.grid, action)
         print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -62,6 +57,8 @@ class Env(gym.Env):
         print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         fancy_print(self.view, action)
         print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        if self._visited(action):
+            return -10, False
         if over:
             return -1, True
         if check_over(self.view, self.mines):

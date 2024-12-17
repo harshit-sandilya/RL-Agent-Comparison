@@ -1,5 +1,5 @@
 from env import Env
-from stable_baselines3 import TD3
+from stable_baselines3 import DQN
 from stable_baselines3.common.callbacks import BaseCallback
 
 
@@ -13,6 +13,6 @@ class TensorboardCallback(BaseCallback):
 
 
 env = Env(8, 10)
-model = TD3("MlpPolicy", env, tensorboard_log="logs/TD3", verbose=1)
+model = DQN("MlpPolicy", env, tensorboard_log="logs/DQN", verbose=1)
 model.learn(total_timesteps=1000000, callback=[TensorboardCallback()])
-model.save("TD3")
+model.save("DQN")
