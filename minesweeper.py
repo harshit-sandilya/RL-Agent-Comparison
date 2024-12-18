@@ -96,16 +96,6 @@ def check_over(mine_values, mines_no):
         return False
 
 
-def create(n_grid, n_mines):
-    grid = [[0 for y in range(n_grid)] for x in range(n_grid)]
-    view = [[-1 for y in range(n_grid)] for x in range(n_grid)]
-
-    set_mines(n_grid, n_mines, grid)
-    set_values(n_grid, grid)
-
-    return grid, view
-
-
 def move(action, grid, view):
     row = action[0]
     col = action[1]
@@ -119,3 +109,26 @@ def move(action, grid, view):
     else:
         view[row][col] = grid[row][col]
         return False
+
+
+def solve(grid, view, solve_tiles):
+    n = len(grid)
+    count = 0
+    while count < solve_tiles:
+        r = random.randint(0, n - 1)
+        col = random.randint(0, n - 1)
+        move([r, col], grid, view)
+
+
+def create(n_grid, n_mines, show=True):
+    grid = [[0 for y in range(n_grid)] for x in range(n_grid)]
+    view = [[-1 for y in range(n_grid)] for x in range(n_grid)]
+
+    set_mines(n_grid, n_mines, grid)
+    set_values(n_grid, grid)
+
+    if show:
+        solve_fraction = random.randint(0, n_grid * n_grid - 1)
+        solve(grid, view, solve_fraction)
+
+    return grid, view
