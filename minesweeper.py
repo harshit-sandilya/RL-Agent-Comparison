@@ -8,44 +8,29 @@ def set_mines(n, mines_no, numbers):
         r = val // n
         col = val % n
         if numbers[r][col] != -1:
-            count = count + 1
+            count += 1
             numbers[r][col] = -1
 
 
 def neighbours(r, col, vis, numbers, mine_values, n):
-
-    # If the cell already not visited
-    if [r, col] not in vis:
-
-        # Mark the cell visited
-        vis.append([r, col])
-
-        # If the cell is zero-valued
+    if (r, col) not in vis:
+        vis.add((r, col))
         if numbers[r][col] == 0:
-
-            # Display it to the user
             mine_values[r][col] = numbers[r][col]
-
-            # Recursive calls for the neighbouring cells
-            if r > 0:
-                neighbours(r - 1, col, vis, numbers, mine_values, n)
-            if r < n - 1:
-                neighbours(r + 1, col, vis, numbers, mine_values, n)
-            if col > 0:
-                neighbours(r, col - 1, vis, numbers, mine_values, n)
-            if col < n - 1:
-                neighbours(r, col + 1, vis, numbers, mine_values, n)
-            if r > 0 and col > 0:
-                neighbours(r - 1, col - 1, vis, numbers, mine_values, n)
-            if r > 0 and col < n - 1:
-                neighbours(r - 1, col + 1, vis, numbers, mine_values, n)
-            if r < n - 1 and col > 0:
-                neighbours(r + 1, col - 1, vis, numbers, mine_values, n)
-            if r < n - 1 and col < n - 1:
-                neighbours(r + 1, col + 1, vis, numbers, mine_values, n)
-
-        # If the cell is not zero-valued
-        if numbers[r][col] != 0:
+            for dr, dc in [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]:
+                nr, nc = r + dr, col + dc
+                if 0 <= nr < n and 0 <= nc < n:
+                    neighbours(nr, nc, vis, numbers, mine_values, n)
+        else:
             mine_values[r][col] = numbers[r][col]
 
 
@@ -54,57 +39,33 @@ def set_values(n, numbers):
         for col in range(n):
             if numbers[r][col] == -1:
                 continue
-
-            # Check up
-            if r > 0 and numbers[r - 1][col] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check down
-            if r < n - 1 and numbers[r + 1][col] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check left
-            if col > 0 and numbers[r][col - 1] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check right
-            if col < n - 1 and numbers[r][col + 1] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check top-left
-            if r > 0 and col > 0 and numbers[r - 1][col - 1] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check top-right
-            if r > 0 and col < n - 1 and numbers[r - 1][col + 1] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check below-left
-            if r < n - 1 and col > 0 and numbers[r + 1][col - 1] == -1:
-                numbers[r][col] = numbers[r][col] + 1
-            # Check below-right
-            if r < n - 1 and col < n - 1 and numbers[r + 1][col + 1] == -1:
-                numbers[r][col] = numbers[r][col] + 1
+            for dr, dc in [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]:
+                nr, nc = r + dr, col + dc
+                if 0 <= nr < n and 0 <= nc < n and numbers[nr][nc] == -1:
+                    numbers[r][col] += 1
 
 
 def check_over(mine_values, mines_no):
-    count = 0
-    n = len(mine_values)
-
-    for r in range(n):
-        for col in range(n):
-            if mine_values[r][col] != -1:
-                count = count + 1
-
-    if count == n * n - mines_no:
-        return True
-    else:
-        return False
+    count = sum(cell != -1 for row in mine_values for cell in row)
+    return count == len(mine_values) * len(mine_values) - mines_no
 
 
 def move(action, grid, view):
-    row = action[0]
-    col = action[1]
-
+    row, col = action
     if grid[row][col] == -1:
         return True
     elif grid[row][col] == 0:
         view[row][col] = 0
-        neighbours(row, col, [], grid, view, len(grid))
+        neighbours(row, col, set(), grid, view, len(grid))
         return False
     else:
         view[row][col] = grid[row][col]
@@ -117,12 +78,14 @@ def solve(grid, view, solve_tiles):
     while count < solve_tiles:
         r = random.randint(0, n - 1)
         col = random.randint(0, n - 1)
-        move([r, col], grid, view)
+        if view[r][col] == -1:
+            move([r, col], grid, view)
+            count += 1
 
 
 def create(n_grid, n_mines, show=True):
-    grid = [[0 for y in range(n_grid)] for x in range(n_grid)]
-    view = [[-1 for y in range(n_grid)] for x in range(n_grid)]
+    grid = [[0] * n_grid for _ in range(n_grid)]
+    view = [[-1] * n_grid for _ in range(n_grid)]
 
     set_mines(n_grid, n_mines, grid)
     set_values(n_grid, grid)
