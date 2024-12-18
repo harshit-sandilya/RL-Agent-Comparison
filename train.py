@@ -1,5 +1,5 @@
 from env import Env
-from stable_baselines3 import DQN
+from stable_baselines3 import A2C
 from stable_baselines3.common.callbacks import BaseCallback
 
 
@@ -13,6 +13,6 @@ class TensorboardCallback(BaseCallback):
 
 
 env = Env(8, 10)
-model = DQN("MlpPolicy", env, tensorboard_log="logs/DQN", verbose=1)
+model = A2C("MlpPolicy", env, tensorboard_log="logs/A2C", verbose=1)
 model.learn(total_timesteps=1000000, callback=[TensorboardCallback()])
-model.save("DQN")
+model.save("A2C")

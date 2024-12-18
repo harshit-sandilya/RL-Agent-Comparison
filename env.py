@@ -22,9 +22,9 @@ class Env(gym.Env):
         super().__init__()
         self.n = n_grid
         self.mines = n_mines
-        self.dict = [(i, j) for i in range(n_grid) for j in range(n_grid)]
-        self.action_space = spaces.Discrete(n_grid * n_grid)
-        # self.action_space = spaces.MultiDiscrete([n_grid, n_grid])
+        # self.dict = [(i, j) for i in range(n_grid) for j in range(n_grid)]
+        # self.action_space = spaces.Discrete(n_grid * n_grid)
+        self.action_space = spaces.MultiDiscrete([n_grid, n_grid])
         low = np.full((n_grid, n_grid), -1, dtype=np.int32)
         high = np.full((n_grid, n_grid), 10, dtype=np.int32)
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.int32)
@@ -38,8 +38,8 @@ class Env(gym.Env):
         return self.grid, {}
 
     def step(self, action):
-        reward, over = self.calc_reward(self.dict[action])
-        # reward, over = self.calc_reward(action)
+        # reward, over = self.calc_reward(self.dict[action])
+        reward, over = self.calc_reward(action)
         done = over
         info = {}
         return self.grid, reward, done, False, info
