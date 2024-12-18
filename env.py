@@ -68,5 +68,5 @@ class Env(gym.Env):
         if over:
             return -1, True
         if check_over(self.view, self.mines):
-            return 2, True
+            return 10, True
         return 1, False
