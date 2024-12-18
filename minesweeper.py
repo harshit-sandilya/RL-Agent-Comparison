@@ -55,43 +55,42 @@ def set_values(n, numbers):
 
 
 def check_over(mine_values, mines_no):
-    count = sum(cell != -1 for row in mine_values for cell in row)
+    count = sum(cell != -2 and cell != -1 for row in mine_values for cell in row)
     return count == len(mine_values) * len(mine_values) - mines_no
 
 
-def move(action, grid, view):
+def move(action, grid, view, queue):
     row, col = action
+    queue.add((row, col))
+    view[row][col] = grid[row][col]
     if grid[row][col] == -1:
         return True
     elif grid[row][col] == 0:
-        view[row][col] = 0
-        neighbours(row, col, set(), grid, view, len(grid))
+        neighbours(row, col, queue, grid, view, len(grid))
         return False
     else:
-        view[row][col] = grid[row][col]
         return False
 
 
-def solve(grid, view, solve_tiles):
+def solve(grid, view, solve_tiles, queue):
     n = len(grid)
     count = 0
     while count < solve_tiles:
         r = random.randint(0, n - 1)
         col = random.randint(0, n - 1)
-        if view[r][col] == -1:
-            move([r, col], grid, view)
-            count += 1
+        move([r, col], grid, view, queue)
+        count += 1
 
 
-def create(n_grid, n_mines, show=True):
+def create(n_grid, n_mines, queue, show=True):
     grid = [[0] * n_grid for _ in range(n_grid)]
-    view = [[-1] * n_grid for _ in range(n_grid)]
+    view = [[-2] * n_grid for _ in range(n_grid)]
 
     set_mines(n_grid, n_mines, grid)
     set_values(n_grid, grid)
 
     if show:
-        solve_fraction = random.randint(0, n_grid * n_grid - 1)
-        solve(grid, view, solve_fraction)
+        solve_fraction = random.randint(0, n_grid * n_grid - 1 - n_mines)
+        solve(grid, view, solve_fraction, queue)
 
     return grid, view
