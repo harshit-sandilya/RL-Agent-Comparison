@@ -1,5 +1,7 @@
 from env import Env
-from stable_baselines3 import A2C
+
+# from stable_baselines3 import TRPO
+from sb3_contrib import TRPO
 from stable_baselines3.common.callbacks import BaseCallback
 
 
@@ -13,6 +15,6 @@ class TensorboardCallback(BaseCallback):
 
 
 env = Env(8, 10)
-model = A2C("MlpPolicy", env, tensorboard_log="logs/A2C", verbose=1)
+model = TRPO("MlpPolicy", env, tensorboard_log="logs/TRPO", verbose=1)
 model.learn(total_timesteps=1000000, callback=[TensorboardCallback()])
-model.save("A2C")
+model.save("TRPO")

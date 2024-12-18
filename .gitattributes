@@ -1,3 +1,0 @@
-.log filter=lfs diff=lfs merge=lfs -text
-outputDQN.log filter=lfs diff=lfs merge=lfs -text
-outputA2C.log filter=lfs diff=lfs merge=lfs -text
