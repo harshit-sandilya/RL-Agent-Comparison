@@ -14,7 +14,9 @@ class TensorboardCallback(BaseCallback):
         return True
 
 
-env = Env(8, 10)
-model = DQN("MlpPolicy", env, tensorboard_log="logs/DQN", verbose=1)
-model.learn(total_timesteps=1000000, callback=[TensorboardCallback()])
+env = Env(8, 10, False)
+model = DQN("MlpPolicy", env, tensorboard_log="logs/DQN")
+model.learn(
+    total_timesteps=10000000, callback=[TensorboardCallback()], progress_bar=True
+)
 model.save("DQN")

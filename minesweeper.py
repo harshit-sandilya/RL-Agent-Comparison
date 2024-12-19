@@ -75,14 +75,33 @@ def move(action, grid, view, queue):
 def solve(grid, view, solve_tiles, queue):
     n = len(grid)
     count = 0
+    safe_cells = []
+    mine_cells = []
+
+    for r in range(n):
+        for c in range(n):
+            if grid[r][c] != -1:
+                safe_cells.append((r, c))
+            else:
+                mine_cells.append((r, c))
+
+    hidden_safe_cell = random.choice(safe_cells)
+    hidden_mine_cell = random.choice(mine_cells)
+
     while count < solve_tiles:
         r = random.randint(0, n - 1)
         col = random.randint(0, n - 1)
-        move([r, col], grid, view, queue)
-        count += 1
+        if (
+            (r, col) not in queue
+            and (r, col) != hidden_safe_cell
+            and (r, col) != hidden_mine_cell
+        ):
+            queue.add((r, col))
+            view[r][col] = grid[r][col]
+            count += 1
 
 
-def create(n_grid, n_mines, queue, show=True):
+def create(n_grid, n_mines, queue, index, show=True):
     grid = [[0] * n_grid for _ in range(n_grid)]
     view = [[-2] * n_grid for _ in range(n_grid)]
 
@@ -90,7 +109,7 @@ def create(n_grid, n_mines, queue, show=True):
     set_values(n_grid, grid)
 
     if show:
-        solve_fraction = random.randint(0, n_grid * n_grid - 1 - n_mines)
-        solve(grid, view, solve_fraction, queue)
+        lst = list(range(n_grid * n_grid - 2, 0, -1))
+        solve(grid, view, lst[index], queue)
 
     return grid, view

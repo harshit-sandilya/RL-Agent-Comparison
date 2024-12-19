@@ -34,14 +34,25 @@ class Env(gym.Env):
         high = np.full((n_grid, n_grid), 8, dtype=np.int32)
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.int32)
         self.queue = set()
+        self.index = 0
+        self.games = 0
+
+    def _update_index(self):
+        if self.index == self.n * self.n - 3:
+            self.index = 0
+        else:
+            self.index = self.index + 1
 
     def _visited(self, action):
         return action in self.queue
 
     def reset(self, seed=None):
         super().reset(seed=seed)
+        self.games += 1
         self.queue = set()
-        self.grid, self.view = create(self.n, self.mines, self.queue, True)
+        self.grid, self.view = create(self.n, self.mines, self.queue, self.index, True)
+        if self.games % 20 == 0:
+            self._update_index()
         return np.array(self.view), {}
 
     def step(self, action):
