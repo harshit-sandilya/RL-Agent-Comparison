@@ -1,95 +1,79 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-from minesweeper import create, move, check_over
-
-
-def fancy_print(grid, action):
-    row_idx, col_idx = action
-
-    for i, row in enumerate(grid):
-        row_str = ""
-        for j, value in enumerate(row):
-            if grid[i][j] == -1:
-                row_str += "   X  "
-            elif grid[i][j] == -2:
-                row_str += "   U  "
-            elif i == row_idx and j == col_idx:
-                row_str += f"**+{value}**" if value >= 0 else f"**{value}**"
-            else:
-                row_str += f"  +{value}  " if value >= 0 else f"  {value}  "
-        print(row_str)
+from minesweeper import create, move, check_over, get_observation, mine_key, unknown_key
 
 
 class Env(gym.Env):
-    def __init__(self, n_grid, n_mines, debug=True):
+    def __init__(self, n_grid, n_mines):
         super().__init__()
         self.n = n_grid
         self.mines = n_mines
-        self.debug = debug
-        self.dict = [(i, j) for i in range(n_grid) for j in range(n_grid)]
-        self.action_space = spaces.Discrete(n_grid * n_grid)
-        # self.action_space = spaces.MultiDiscrete([n_grid, n_grid])
-        low = np.full((n_grid, n_grid), -2, dtype=np.int32)
-        high = np.full((n_grid, n_grid), 8, dtype=np.int32)
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.int32)
+
+        # self.dict = [(i, j) for i in range(n_grid) for j in range(n_grid)]
+        # self.action_space = spaces.Discrete(n_grid * n_grid)
+        self.action_space = spaces.MultiDiscrete([n_grid, n_grid])
+        low = np.full(
+            (n_grid, n_grid, 3), min(unknown_key, mine_key, 0), dtype=np.uint8
+        )
+        high = np.full(
+            (n_grid, n_grid, 3), max(unknown_key, mine_key, 8), dtype=np.uint8
+        )
+        self.observation_space = spaces.Box(low=low, high=high, dtype=np.uint8)
+
         self.queue = set()
         self.index = 0
-        self.games = 0
+        self.wonLast = False
+        self.wonTwoLast = False
+        self.reward = 0
+        self.action = None
 
     def _update_index(self):
-        if self.index == self.n * self.n - 3:
+        if self.index == self.n * self.n - self.mines - 1:
             self.index = 0
         else:
             self.index = self.index + 1
 
     def _visited(self, action):
-        return action in self.queue
+        return tuple(action) in self.queue
 
     def reset(self, seed=None):
         super().reset(seed=seed)
-        self.games += 1
         self.queue = set()
         self.grid, self.view = create(self.n, self.mines, self.queue, self.index, True)
-        if self.games % 20 == 0:
+        if self.wonTwoLast:
             self._update_index()
-        return np.array(self.view), {}
+            self.wonTwoLast = False
+            self.wonLast = False
+        return get_observation(self.view, self.action), {}
 
     def step(self, action):
-        reward, over = self.calc_reward(self.dict[action])
-        # reward, over = self.calc_reward(action)
-        if self.debug:
-            print("++++++++++++++++++++++++++REWARD+++++++++++++++++++++++++++++++")
-            print(reward)
-            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        done = over
+        # reward, over = self.calc_reward(self.dict[action])
+        reward, done = self.calc_reward(action)
+        self.action = action
+        self.reward = reward
         info = {}
-        return np.array(self.view), reward, done, False, info
+        return get_observation(self.view, self.action), reward, done, False, info
+
+    def render(self):
+        print(self.view)
 
     def calc_reward(self, action):
         visited = self._visited(action)
-        if self.debug:
-            print("++++++++++++++++++++++++++BEFORE(ACTUAL)+++++++++++++++++++++++")
-            fancy_print(self.grid, action)
-            print("+++++++++++++++++++++++++++VIEW++++++++++++++++++++++++++++++++")
-            fancy_print(self.view, action)
-            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-            print(action)
-            print("Visited", visited)
-
         over = move(action, self.grid, self.view, self.queue)
+        self.visited_same = 1 if visited else 0
+        self.on_mine = 1 if self.grid[action[0]][action[1]] == mine_key else 0
+        self.won_game = 1 if check_over(self.view, self.mines) else 0
 
-        if self.debug:
-            print("++++++++++++++++++++++++++AFTER(ACTUAL)++++++++++++++++++++++++")
-            fancy_print(self.grid, action)
-            print("+++++++++++++++++++++++++++VIEW++++++++++++++++++++++++++++++++")
-            fancy_print(self.view, action)
-            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-
+        if self.action is not None and np.array_equal(action, self.action):
+            return -100, False
         if visited:
-            return -1, False
+            return -50, False
         if over:
-            return -1, False
+            return -10, True
         if check_over(self.view, self.mines):
-            return 2, True
-        return 1, False
+            if self.wonLast:
+                self.wonTwoLast = True
+            self.wonLast = True
+            return 100, True
+        return 50, False
