@@ -1,8 +1,8 @@
 import random
 import numpy as np
 
-mine_key = 12
-unknown_key = 16
+mine_key = 16
+unknown_key = 255
 
 
 def set_mines(n, mines_no, numbers):

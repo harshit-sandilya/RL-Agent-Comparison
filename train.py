@@ -1,7 +1,7 @@
 from env import Env
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
-
+from FeatureExtractor import CustomCNN
 
 class TensorboardCallback(BaseCallback):
     def __init__(self, env, verbose=0):
@@ -29,8 +29,13 @@ class DebugCallback(BaseCallback):
         return True
 
 
+policy_kwargs = dict(
+    features_extractor_class=CustomCNN,
+    features_extractor_kwargs=dict(features_dim=64),
+)
+
 env = Env(8, 10)
-model = PPO("MlpPolicy", env, tensorboard_log="logs/PPO", gamma=0, learning_rate=0.0001)
+model = PPO("CnnPolicy", env, tensorboard_log="logs/PPO", gamma=0, learning_rate=0.001, policy_kwargs=policy_kwargs)
 model.learn(
     total_timesteps=10000000,
     callback=[TensorboardCallback(env), DebugCallback(env)],
